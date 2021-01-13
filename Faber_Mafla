@@ -1,0 +1,58 @@
+#include <MsTimer2.h> // libresia
+#include<avr/wdt.h>
+
+/* Realice un programa que mediante un conversor análogo-digitalse configure
+   el tiempo de reinicio del perro guardián (tiempos seleccionados por el usuario).
+   Envíe mensajes por comunicación serial validando todo el proceso.
+*/
+
+int i = 0;
+int valor = 0;
+int bloqueo = 0;
+int aux = 0;// imprime una vez 
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(3, INPUT);
+  wdt_disable();
+
+  Serial.println(" ");
+  Serial.println("Seleccione el tiempo a reiniciar");
+}
+
+void loop() {
+
+  valor = analogRead(0) * 0.059; // 60/1023 obtene de 0 y 60 seg
+
+  if ((valor != aux) && bloqueo == 0 ) {
+    Serial.print("Segundos: ");
+    Serial.println(valor);
+    aux = valor;
+  }
+
+  if (digitalRead(3) == HIGH) {
+    MsTimer2::set(1000, contador);
+    MsTimer2::start();
+    bloqueo = 1;
+    Serial.println("--------------------------------------");
+    Serial.print("         Reinicio en ");
+    Serial.println(valor);
+    Serial.println("--------------------------------------");
+    delay(300);
+  }
+
+}
+
+void contador() {
+  i++;
+  Serial.print("Segundos: ");
+  Serial.println(String(i)+"s");
+
+  if (i == valor) {
+    MsTimer2::stop();
+    wdt_enable(WDTO_30MS);
+  }
+  else {
+    wdt_disable();
+  }
+}
